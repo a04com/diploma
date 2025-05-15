@@ -1,0 +1,308 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, rgba(246,196,237,0.5), rgba(225,218,230,0.9), #fff 80%) !important;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.form-box, .dashboard-box {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+h2 {
+    text-align: center;
+    color: #222 !important;
+    margin-bottom: 30px;
+    font-size: 28px;
+    font-weight: 700 !important;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn:hover {
+    background: #764ba2;
+}
+
+.switch-form {
+    text-align: center;
+    margin-top: 20px;
+    color: #666;
+}
+
+.switch-form a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.switch-form a:hover {
+    color: #764ba2;
+}
+
+.alert {
+    background: #ff6b6b;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.dashboard-box p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* --- Dashboard Grid and Cards (compact) --- */
+.dashboard-container {
+    max-width: 900px;
+    margin: 60px auto 0 auto;
+    padding: 0 10px 60px 10px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h2 {
+    font-size: 2rem;
+    color: #222 !important;
+    font-weight: 700 !important;
+}
+
+.signout-btn {
+    width: auto;
+    padding: 6px 16px;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+.add-delete-btn {
+    background: #38a169;
+    color: #fff;
+    margin-right: 10px;
+    font-size: 14px;
+    padding: 6px 16px;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: background 0.2s;
+    width: auto;
+    display: inline-block;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+}
+
+.section-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(80, 80, 120, 0.22), 0 4px 16px rgba(80, 80, 120, 0.14);
+    padding: 40px 36px 36px 36px;
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.see-all {
+    font-size: 12px;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+.see-all:hover {
+    text-decoration: underline;
+    color: #764ba2;
+}
+
+.topic-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.topic-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+.topic-list li:last-child {
+    border-bottom: none;
+}
+
+.topic-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f6fd;
+    color: #667eea;
+    border-radius: 50%;
+    font-size: 14px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.topic-btn {
+    background: #e9eefd;
+    color: #667eea;
+    border: none;
+    border-radius: 5px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.topic-btn:hover {
+    background: #667eea;
+    color: #fff;
+}
+
+@media (max-width: 900px) {
+    .sections-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .dashboard-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.exercises-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 10px;
+}
+
+.exercise-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 16px 18px;
+}
+
+.exercise-question {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.exercise-options {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.exercise-options li {
+    background: #f3f6fd;
+    color: #667eea;
+    border-radius: 5px;
+    padding: 7px 12px;
+    margin-bottom: 7px;
+    font-size: 15px;
+    display: inline-block;
+}
+.exercise-options li:last-child {
+    margin-bottom: 0;
+}
+
+/* Option button pill style */
+.option-btn {
+    background: #f3f6fd;
+    color: #667eea;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 16px;
+    font-weight: 500;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    outline: none;
+    box-shadow: none;
+    display: inline-block;
+}
+.option-btn:hover {
+    background: #e9eefd;
+    color: #4b5fc9;
+}
+.option-btn.selected {
+    background: #667eea;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(102,126,234,0.10);
+}
+
+/* Remove default button focus outline for option buttons */
+.option-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #c3dafe;
+} 
