@@ -7,119 +7,222 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         body { background: linear-gradient( 135deg, #f9c823, #fc506e ); min-height: 100vh; margin: 0; font-family: sans-serif; }
+        .dashboard-header-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 0 32px;
+            height: 64px;
+        }
+        .logotype {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d2d2d;
+            letter-spacing: 1px;
+        }
+        .dashboard-search {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .dashboard-search input[type="text"] {
+            width: 340px;
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px 0 0 24px;
+            font-size: 1rem;
+            outline: none;
+            background: #fafbfc;
+        }
+        .dashboard-search button {
+            padding: 8px 18px;
+            border: none;
+            background: #3b5bdb;
+            color: #fff;
+            border-radius: 0 24px 24px 0;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .dashboard-search button:hover {
+            background: #274690;
+        }
+        .dashboard-header-btns {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .dashboard-header-btns .btn {
+            font-size: 1rem;
+            padding: 7px 22px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .dashboard-welcome {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 32px 0 18px 0;
+            color: #222;
+        }
+        .dashboard-main-content {
+            padding-top: 80px;
+        }
     </style>
 </head>
 <body>
-    <div class="container dashboard-container">
-        <div class="dashboard-header">
-            <h2>Добро пожаловать, {{ username }}{% if title %}, {{ title }}{% endif %}!</h2>
+    <div class="dashboard-header-bar">
+        <a href="{{ url_for('dashboard') }}" style="text-decoration:none;"><div class="logotype">MathMastery</div></a>
+        <form class="dashboard-search" method="GET" action="#">
+            <input type="text" name="search" placeholder="Поиск по курсам или темам...">
+            <button type="submit">🔍</button>
+        </form>
+        <div class="dashboard-header-btns">
             {% if title == 'admin' %}
                 <a href="{{ url_for('add_delete') }}" class="btn add-delete-btn">Добавить/Удалить</a>
             {% endif %}
+            <a href="{{ url_for('about_us') }}" class="btn signout-btn">О нас</a>
             <a href="{{ url_for('signout') }}" class="btn signout-btn">Выйти</a>
         </div>
-        <div class="sections-grid">
-            <!-- Алгебра -->
-            <div class="section-card">
-                <div class="section-header">
-                    <span>Алгебра</span>
-                    <a href="#" class="see-all">Все темы</a>
+    </div>
+    <div class="dashboard-main-content">
+        <div class="dashboard-welcome">
+            Добро пожаловать, {{ username }}{% if title %}, {{ title }}{% endif %}!
+        </div>
+        {% set visible_count = (show_courses['algebra']|int + show_courses['geometry']|int + show_courses['trigonometry']|int + show_courses['ent']|int) %}
+        {% set total_topics = algebra_topics|length + geometry_topics|length + trigonometry_topics|length + ent_topics|length %}
+        {% if visible_count == 0 %}
+            <div style="text-align:center; font-size:1.5rem; color:#444; margin-top:40px;">По вашему запросу ничего нет.</div>
+        {% endif %}
+        <div class="container dashboard-container{% if visible_count == 1 and total_topics == 1 %} single-centered{% endif %}">
+            <div class="sections-grid">
+                <!-- Алгебра -->
+                {% if show_courses['algebra'] %}
+                <div class="section-card">
+                    <div class="section-header">
+                        <span>Алгебра</span>
+                        <a href="#" class="see-all">Все темы</a>
+                    </div>
+                    <ul class="topic-list">
+                        {% for topic, topic_name in algebra_topics %}
+                            <li>
+                                <span class="topic-icon">&#8721;</span>
+                                <a class="topic-link" href="{{ url_for('algebra_topic', topic=topic) }}">{{ topic_name }}</a>
+                                <a href="{{ url_for('algebra_topic', topic=topic) }}" class="topic-btn">Начать</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="algebra-progress-chart">
+                        <svg width="110" height="110" viewBox="0 0 110 110">
+                            <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
+                            <circle cx="55" cy="55" r="48" stroke="#667eea" stroke-width="12" fill="none"
+                                stroke-dasharray="{{ 2*3.1416*48 }}"
+                                stroke-dashoffset="{{ (1 - (algebra_solved/total_algebra if total_algebra else 0)) * 2*3.1416*48 }}"
+                                stroke-linecap="round"
+                                transform="rotate(-90 55 55)" />
+                            <text x="55" y="62" text-anchor="middle" font-size="26" fill="#667eea" font-weight="bold">{{ (algebra_solved/total_algebra*100)|round(0) if total_algebra else 0 }}%</text>
+                        </svg>
+                        <div class="algebra-progress-label">{{ algebra_solved }} из {{ total_algebra }} решено</div>
+                    </div>
                 </div>
-                <ul class="topic-list">
-                    <li><span class="topic-icon">&#8721;</span> <a class="topic-link" href="{{ url_for('algebra_topic', topic='Variables') }}">Переменные</a> <a href="{{ url_for('algebra_topic', topic='Variables') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#120121;</span> <a class="topic-link" href="{{ url_for('algebra_topic', topic='Equations') }}">Уравнения</a> <a href="{{ url_for('algebra_topic', topic='Equations') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#120123;</span> <a class="topic-link" href="{{ url_for('algebra_topic', topic='Functions') }}">Функции</a> <a href="{{ url_for('algebra_topic', topic='Functions') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#8804;</span> <a class="topic-link" href="{{ url_for('algebra_topic', topic='Inequalities') }}">Неравенства</a> <a href="{{ url_for('algebra_topic', topic='Inequalities') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#120130;</span> <a class="topic-link" href="{{ url_for('algebra_topic', topic='Quadratics') }}">Квадратные уравнения</a> <a href="{{ url_for('algebra_topic', topic='Quadratics') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#8756;</span> <a class="topic-link" href="{{ url_for('algebra_topic', topic='Systems') }}">Системы уравнений</a> <a href="{{ url_for('algebra_topic', topic='Systems') }}" class="topic-btn">Начать</a></li>
-                </ul>
-                <div class="algebra-progress-chart">
-                    <svg width="110" height="110" viewBox="0 0 110 110">
-                        <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
-                        <circle cx="55" cy="55" r="48" stroke="#667eea" stroke-width="12" fill="none"
-                            stroke-dasharray="{{ 2*3.1416*48 }}"
-                            stroke-dashoffset="{{ (1 - (algebra_solved/total_algebra if total_algebra else 0)) * 2*3.1416*48 }}"
-                            stroke-linecap="round"
-                            transform="rotate(-90 55 55)" />
-                        <text x="55" y="62" text-anchor="middle" font-size="26" fill="#667eea" font-weight="bold">{{ (algebra_solved/total_algebra*100)|round(0) if total_algebra else 0 }}%</text>
-                    </svg>
-                    <div class="algebra-progress-label">{{ algebra_solved }} из {{ total_algebra }} решено</div>
+                {% endif %}
+                <!-- Геометрия -->
+                {% if show_courses['geometry'] %}
+                <div class="section-card">
+                    <div class="section-header">
+                        <span>Геометрия</span>
+                        <a href="#" class="see-all">Все темы</a>
+                    </div>
+                    <ul class="topic-list">
+                        {% for topic, topic_name in geometry_topics %}
+                            <li>
+                                <span class="topic-icon">&#8736;</span>
+                                <a class="topic-link" href="{{ url_for('geometry_topic', topic=topic) }}">{{ topic_name }}</a>
+                                <a href="{{ url_for('geometry_topic', topic=topic) }}" class="topic-btn">Начать</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="geometry-progress-chart">
+                        <svg width="110" height="110" viewBox="0 0 110 110">
+                            <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
+                            <circle cx="55" cy="55" r="48" stroke="#764ba2" stroke-width="12" fill="none"
+                                stroke-dasharray="{{ 2*3.1416*48 }}"
+                                stroke-dashoffset="{{ (1 - (geometry_solved/total_geometry if total_geometry else 0)) * 2*3.1416*48 }}"
+                                stroke-linecap="round"
+                                transform="rotate(-90 55 55)" />
+                            <text x="55" y="62" text-anchor="middle" font-size="26" fill="#764ba2" font-weight="bold">{{ (geometry_solved/total_geometry*100)|round(0) if total_geometry else 0 }}%</text>
+                        </svg>
+                        <div class="geometry-progress-label">{{ geometry_solved }} из {{ total_geometry }} решено</div>
+                    </div>
                 </div>
-            </div>
-            <!-- Геометрия -->
-            <div class="section-card">
-                <div class="section-header">
-                    <span>Геометрия</span>
-                    <a href="#" class="see-all">Все темы</a>
+                {% endif %}
+                <!-- Тригонометрия -->
+                {% if show_courses['trigonometry'] %}
+                <div class="section-card">
+                    <div class="section-header">
+                        <span>Тригонометрия</span>
+                        <a href="#" class="see-all">Все темы</a>
+                    </div>
+                    <ul class="topic-list">
+                        {% for topic, topic_name in trigonometry_topics %}
+                            <li>
+                                <span class="topic-icon">sin</span>
+                                <a class="topic-link" href="{{ url_for('trigonometry_topic', topic=topic) }}">{{ topic_name }}</a>
+                                <a href="{{ url_for('trigonometry_topic', topic=topic) }}" class="topic-btn">Начать</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="trigonometry-progress-chart">
+                        <svg width="110" height="110" viewBox="0 0 110 110">
+                            <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
+                            <circle cx="55" cy="55" r="48" stroke="#48bb78" stroke-width="12" fill="none"
+                                stroke-dasharray="{{ 2*3.1416*48 }}"
+                                stroke-dashoffset="{{ (1 - (trigonometry_solved/total_trigonometry if total_trigonometry else 0)) * 2*3.1416*48 }}"
+                                stroke-linecap="round"
+                                transform="rotate(-90 55 55)" />
+                            <text x="55" y="62" text-anchor="middle" font-size="26" fill="#48bb78" font-weight="bold">{{ (trigonometry_solved/total_trigonometry*100)|round(0) if total_trigonometry else 0 }}%</text>
+                        </svg>
+                        <div class="trigonometry-progress-label">{{ trigonometry_solved }} из {{ total_trigonometry }} решено</div>
+                    </div>
                 </div>
-                <ul class="topic-list">
-                    <li><span class="topic-icon">&#8736;</span> <a class="topic-link" href="{{ url_for('geometry_topic', topic='Angles') }}">Углы</a> <a href="{{ url_for('geometry_topic', topic='Angles') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#9651;</span> <a class="topic-link" href="{{ url_for('geometry_topic', topic='Triangles') }}">Треугольники</a> <a href="{{ url_for('geometry_topic', topic='Triangles') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#9632;</span> <a class="topic-link" href="{{ url_for('geometry_topic', topic='Quadrilaterals') }}">Четырехугольники</a> <a href="{{ url_for('geometry_topic', topic='Quadrilaterals') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#9675;</span> <a class="topic-link" href="{{ url_for('geometry_topic', topic='Circle') }}">Окружность</a> <a href="{{ url_for('geometry_topic', topic='Circle') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#9642;</span> <a class="topic-link" href="{{ url_for('geometry_topic', topic='Area') }}">Площадь</a> <a href="{{ url_for('geometry_topic', topic='Area') }}" class="topic-btn">Начать</a></li>
-                </ul>
-                <div class="geometry-progress-chart">
-                    <svg width="110" height="110" viewBox="0 0 110 110">
-                        <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
-                        <circle cx="55" cy="55" r="48" stroke="#764ba2" stroke-width="12" fill="none"
-                            stroke-dasharray="{{ 2*3.1416*48 }}"
-                            stroke-dashoffset="{{ (1 - (geometry_solved/total_geometry if total_geometry else 0)) * 2*3.1416*48 }}"
-                            stroke-linecap="round"
-                            transform="rotate(-90 55 55)" />
-                        <text x="55" y="62" text-anchor="middle" font-size="26" fill="#764ba2" font-weight="bold">{{ (geometry_solved/total_geometry*100)|round(0) if total_geometry else 0 }}%</text>
-                    </svg>
-                    <div class="geometry-progress-label">{{ geometry_solved }} из {{ total_geometry }} решено</div>
+                {% endif %}
+                <!-- ЕНТ -->
+                {% if show_courses['ent'] %}
+                <div class="section-card">
+                    <div class="section-header">
+                        <span>ЕНТ</span>
+                        <a href="#" class="see-all">Все тесты</a>
+                    </div>
+                    <ul class="topic-list">
+                        {% for topic, topic_name in ent_topics %}
+                            <li>
+                                <span class="topic-icon">&#9733;</span>
+                                <a class="topic-link" href="{{ url_for('ent_topic', topic=topic) }}">{{ topic_name }}</a>
+                                <a href="{{ url_for('ent_topic', topic=topic) }}" class="topic-btn">Начать</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="ent-progress-chart">
+                        <svg width="110" height="110" viewBox="0 0 110 110">
+                            <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
+                            <circle cx="55" cy="55" r="48" stroke="#3182ce" stroke-width="12" fill="none"
+                                stroke-dasharray="{{ 2*3.1416*48 }}"
+                                stroke-dashoffset="{{ (1 - (ent_solved/total_ent if total_ent else 0)) * 2*3.1416*48 }}"
+                                stroke-linecap="round"
+                                transform="rotate(-90 55 55)" />
+                            <text x="55" y="62" text-anchor="middle" font-size="26" fill="#3182ce" font-weight="bold">{{ (ent_solved/total_ent*100)|round(0) if total_ent else 0 }}%</text>
+                        </svg>
+                        <div class="ent-progress-label">{{ ent_solved }} из {{ total_ent }} решено</div>
+                    </div>
                 </div>
-            </div>
-            <!-- Тригонометрия -->
-            <div class="section-card">
-                <div class="section-header">
-                    <span>Тригонометрия</span>
-                    <a href="#" class="see-all">Все темы</a>
-                </div>
-                <ul class="topic-list">
-                    <li><span class="topic-icon">sin</span> <a class="topic-link" href="{{ url_for('trigonometry_topic', topic='Sine') }}">Синус</a> <a href="{{ url_for('trigonometry_topic', topic='Sine') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">cos</span> <a class="topic-link" href="{{ url_for('trigonometry_topic', topic='Cosine') }}">Косинус</a> <a href="{{ url_for('trigonometry_topic', topic='Cosine') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">tan</span> <a class="topic-link" href="{{ url_for('trigonometry_topic', topic='Tangent') }}">Тангенс</a> <a href="{{ url_for('trigonometry_topic', topic='Tangent') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#8801;</span> <a class="topic-link" href="{{ url_for('trigonometry_topic', topic='Trigonometric Equations') }}">Тригонометрические уравнения</a> <a href="{{ url_for('trigonometry_topic', topic='Trigonometric Equations') }}" class="topic-btn">Начать</a></li>
-                </ul>
-                <div class="trigonometry-progress-chart">
-                    <svg width="110" height="110" viewBox="0 0 110 110">
-                        <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
-                        <circle cx="55" cy="55" r="48" stroke="#48bb78" stroke-width="12" fill="none"
-                            stroke-dasharray="{{ 2*3.1416*48 }}"
-                            stroke-dashoffset="{{ (1 - (trigonometry_solved/total_trigonometry if total_trigonometry else 0)) * 2*3.1416*48 }}"
-                            stroke-linecap="round"
-                            transform="rotate(-90 55 55)" />
-                        <text x="55" y="62" text-anchor="middle" font-size="26" fill="#48bb78" font-weight="bold">{{ (trigonometry_solved/total_trigonometry*100)|round(0) if total_trigonometry else 0 }}%</text>
-                    </svg>
-                    <div class="trigonometry-progress-label">{{ trigonometry_solved }} из {{ total_trigonometry }} решено</div>
-                </div>
-            </div>
-            <!-- ЕНТ -->
-            <div class="section-card">
-                <div class="section-header">
-                    <span>ЕНТ</span>
-                    <a href="#" class="see-all">Все тесты</a>
-                </div>
-                <ul class="topic-list">
-                    <li><span class="topic-icon">&#9733;</span> <a class="topic-link" href="{{ url_for('ent_topic', topic='Test 1') }}">Тест 1</a> <a href="{{ url_for('ent_topic', topic='Test 1') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#9733;</span> <a class="topic-link" href="{{ url_for('ent_topic', topic='Test 2') }}">Тест 2</a> <a href="{{ url_for('ent_topic', topic='Test 2') }}" class="topic-btn">Начать</a></li>
-                    <li><span class="topic-icon">&#9733;</span> <a class="topic-link" href="{{ url_for('ent_topic', topic='Test 3') }}">Тест 3</a> <a href="{{ url_for('ent_topic', topic='Test 3') }}" class="topic-btn">Начать</a></li>
-                </ul>
-                <div class="ent-progress-chart">
-                    <svg width="110" height="110" viewBox="0 0 110 110">
-                        <circle cx="55" cy="55" r="48" stroke="#e6e6e6" stroke-width="12" fill="none" />
-                        <circle cx="55" cy="55" r="48" stroke="#3182ce" stroke-width="12" fill="none"
-                            stroke-dasharray="{{ 2*3.1416*48 }}"
-                            stroke-dashoffset="{{ (1 - (ent_solved/total_ent if total_ent else 0)) * 2*3.1416*48 }}"
-                            stroke-linecap="round"
-                            transform="rotate(-90 55 55)" />
-                        <text x="55" y="62" text-anchor="middle" font-size="26" fill="#3182ce" font-weight="bold">{{ (ent_solved/total_ent*100)|round(0) if total_ent else 0 }}%</text>
-                    </svg>
-                    <div class="ent-progress-label">{{ ent_solved }} из {{ total_ent }} решено</div>
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -188,6 +291,14 @@
     }
     .add-delete-btn:hover {
         background: #276749;
+    }
+    .about-btn { margin-left: 0 !important; }
+    .header-btns a { margin-left: 0 !important; }
+    .single-centered.sections-grid, .container.dashboard-container.single-centered .sections-grid {
+        min-height: 60vh;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     </style>
 </body>

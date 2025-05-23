@@ -42,6 +42,7 @@
         </div>
         <div class="admin-section" id="topics-section" style="display:none;">
             <label class="admin-label">Темы в <span id="selected-course"></span>:</label>
+            <button class="admin-btn" id="add-topic-btn" style="margin-bottom:12px;">Добавить тему</button>
             <div class="topic-list" id="topic-list"></div>
         </div>
         <div class="admin-section" id="exercises-section" style="display:none;">
@@ -70,6 +71,38 @@
             <button class="admin-btn" onclick="submitAddExercise()">Добавить</button>
         </div>
     </div>
+    <!-- Add Topic Modal -->
+    <div id="add-topic-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:1000;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:32px 28px;border-radius:10px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(80,80,120,0.18);position:relative;">
+            <span style="position:absolute;top:10px;right:18px;font-size:22px;cursor:pointer;" onclick="closeAddTopicModal()">&times;</span>
+            <h3 style="margin-bottom:18px;">Добавить новую тему</h3>
+            <div style="margin-bottom:12px;">
+                <label>Техническое имя темы (topic, латиницей):</label><br>
+                <input type="text" id="add-topic-topic" style="width:100%;padding:6px 10px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Название темы (topic_name, по-русски):</label><br>
+                <input type="text" id="add-topic-topic_name" style="width:100%;padding:6px 10px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Уровень (level):</label><br>
+                <input type="text" id="add-topic-level" style="width:100%;padding:6px 10px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Вопрос:</label><br>
+                <input type="text" id="add-topic-question" style="width:100%;padding:6px 10px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Варианты ответа (через запятую):</label><br>
+                <input type="text" id="add-topic-options" style="width:100%;padding:6px 10px;">
+            </div>
+            <div style="margin-bottom:18px;">
+                <label>Ответ:</label><br>
+                <input type="text" id="add-topic-answer" style="width:100%;padding:6px 10px;">
+            </div>
+            <button class="admin-btn" onclick="submitAddTopic()">Добавить тему</button>
+        </div>
+    </div>
     <script>
         // Assign as a string, then parse
         const courseTopics = JSON.parse('{{ course_topics|tojson|safe }}');
@@ -89,14 +122,29 @@
             selectedCourse.textContent = course;
             const topics = courseTopics[course] || [];
             topicList.innerHTML = topics.map(function(t) {
-                return `<div class='topic-item'><span class='topic-name'>${t}</span><span class='topic-actions'><a href='#' onclick='editTopic("${course}", "${t}");return false;'>Edit</a><a href='#' onclick='deleteTopic("${course}", "${t}");return false;'>Delete</a></span></div>`;
+                return `<div class='topic-item'><span class='topic-name'>${t}</span><span class='topic-actions'><a href='#' onclick='editTopic("${course}", "${t}");return false;'>Edit</a><a href='#' style='color:#e3342f;' onclick='deleteTopic("${course}", "${t}", this);return false;'>Удалить</a></span></div>`;
             }).join('');
         }
         function addTopic() {
             alert('Add Topic functionality coming soon!');
         }
-        function deleteTopic(course, topic) {
-            alert('Delete Topic: ' + topic + ' in ' + course + ' (functionality coming soon!)');
+        function deleteTopic(course, topic, el) {
+            if (!confirm('Удалить тему "' + topic + '" и все её упражнения?')) return;
+            fetch('/admin_delete_topic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ course, topic })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the topic row from the UI
+                    el.closest('.topic-item').remove();
+                } else {
+                    alert(data.error || 'Ошибка удаления');
+                }
+            });
         }
         function editTopic(course, topic) {
             // Show exercises section and fetch real exercises from backend
@@ -194,6 +242,49 @@
                     editTopic(course, topic);
                 } else {
                     alert(data.error || 'Delete failed');
+                }
+            });
+        }
+        document.getElementById('add-topic-btn').onclick = function() {
+            document.getElementById('add-topic-modal').style.display = 'flex';
+            document.getElementById('add-topic-topic').value = '';
+            document.getElementById('add-topic-topic_name').value = '';
+            document.getElementById('add-topic-level').value = '';
+            document.getElementById('add-topic-question').value = '';
+            document.getElementById('add-topic-options').value = '';
+            document.getElementById('add-topic-answer').value = '';
+        };
+        function closeAddTopicModal() {
+            document.getElementById('add-topic-modal').style.display = 'none';
+        }
+        function submitAddTopic() {
+            const course = document.getElementById('course-select').value;
+            const topic = document.getElementById('add-topic-topic').value.trim();
+            const topic_name = document.getElementById('add-topic-topic_name').value.trim();
+            const level = document.getElementById('add-topic-level').value.trim();
+            const question = document.getElementById('add-topic-question').value.trim();
+            const options = document.getElementById('add-topic-options').value.split(',').map(s => s.trim()).filter(Boolean);
+            const answer = document.getElementById('add-topic-answer').value.trim();
+            if (!course || !topic || !topic_name || !level || !question || !options.length || !answer) {
+                alert('Пожалуйста, заполните все поля.');
+                return;
+            }
+            fetch('/admin_add_topic', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ course, topic, topic_name, level, question, options, answer })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    closeAddTopicModal();
+                    // Add new topic to the topic list visually
+                    const topicList = document.getElementById('topic-list');
+                    const newTopicHtml = `<div class='topic-item'><span class='topic-name'>${topic_name}</span><span class='topic-actions'><a href='#' onclick='editTopic("${course}", "${topic}");return false;'>Edit</a><a href='#' style='color:#e3342f;' onclick='deleteTopic("${course}", "${topic}", this);return false;'>Удалить</a></span></div>`;
+                    topicList.insertAdjacentHTML('beforeend', newTopicHtml);
+                } else {
+                    alert(data.error || 'Ошибка добавления');
                 }
             });
         }

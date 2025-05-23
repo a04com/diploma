@@ -41,7 +41,7 @@ def ask_groq_ai(exercise, user_message):
 def home():
     if 'username' in session:
         return redirect(url_for('dashboard'))
-    return redirect(url_for('signin'))
+    return redirect(url_for('about_us'))
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -100,7 +100,115 @@ def dashboard():
     total_trigonometry = questions_trigonometry.count_documents({})
     ent_solved = user.get('ent_solved', 0)
     total_ent = questions_ent.count_documents({})
-    return render_template('dashboard.html', username=username, title=title, language=language, algebra_solved=algebra_solved, total_algebra=total_algebra, geometry_solved=geometry_solved, total_geometry=total_geometry, trigonometry_solved=trigonometry_solved, total_trigonometry=total_trigonometry, ent_solved=ent_solved, total_ent=total_ent)
+
+    # Get all topics and their names for each course
+    algebra_topics = []
+    for topic in questions_algebra.distinct('topic'):
+        topic_doc = questions_algebra.find_one({'topic': topic})
+        if topic_doc and 'topic_name' in topic_doc:
+            algebra_topics.append((topic, topic_doc['topic_name']))
+        else:
+            algebra_topics.append((topic, topic))
+
+    geometry_topics = []
+    for topic in questions_geometry.distinct('topic'):
+        topic_doc = questions_geometry.find_one({'topic': topic})
+        if topic_doc and 'topic_name' in topic_doc:
+            geometry_topics.append((topic, topic_doc['topic_name']))
+        else:
+            geometry_topics.append((topic, topic))
+
+    trigonometry_topics = []
+    for topic in questions_trigonometry.distinct('topic'):
+        topic_doc = questions_trigonometry.find_one({'topic': topic})
+        if topic_doc and 'topic_name' in topic_doc:
+            trigonometry_topics.append((topic, topic_doc['topic_name']))
+        else:
+            trigonometry_topics.append((topic, topic))
+
+    ent_topics = []
+    for topic in questions_ent.distinct('topic'):
+        topic_doc = questions_ent.find_one({'topic': topic})
+        if topic_doc and 'topic_name' in topic_doc:
+            ent_topics.append((topic, topic_doc['topic_name']))
+        else:
+            ent_topics.append((topic, topic))
+
+    # --- Search logic ---
+    search_query = request.args.get('search', '').strip().lower()
+    show_courses = {'algebra': True, 'geometry': True, 'trigonometry': True, 'ent': True}
+    filtered = {
+        'algebra': [],
+        'geometry': [],
+        'trigonometry': [],
+        'ent': []
+    }
+    if search_query:
+        # Check for course name match
+        course_map = {
+            'алгебра': 'algebra',
+            'геометрия': 'geometry',
+            'тригонометрия': 'trigonometry',
+            'ент': 'ent',
+        }
+        if search_query in course_map:
+            for k in show_courses:
+                show_courses[k] = (k == course_map[search_query])
+            if show_courses['algebra']:
+                filtered['algebra'] = algebra_topics
+            if show_courses['geometry']:
+                filtered['geometry'] = geometry_topics
+            if show_courses['trigonometry']:
+                filtered['trigonometry'] = trigonometry_topics
+            if show_courses['ent']:
+                filtered['ent'] = ent_topics
+        else:
+            # Search in all topics
+            for topic, topic_name in algebra_topics:
+                if search_query in topic_name.lower():
+                    show_courses['algebra'] = True
+                    filtered['algebra'].append((topic, topic_name))
+            for topic, topic_name in geometry_topics:
+                if search_query in topic_name.lower():
+                    show_courses['geometry'] = True
+                    filtered['geometry'].append((topic, topic_name))
+            for topic, topic_name in trigonometry_topics:
+                if search_query in topic_name.lower():
+                    show_courses['trigonometry'] = True
+                    filtered['trigonometry'].append((topic, topic_name))
+            for topic, topic_name in ent_topics:
+                if search_query in topic_name.lower():
+                    show_courses['ent'] = True
+                    filtered['ent'].append((topic, topic_name))
+            # Hide courses with no results
+            for k in show_courses:
+                if not filtered[k]:
+                    show_courses[k] = False
+    else:
+        filtered['algebra'] = algebra_topics
+        filtered['geometry'] = geometry_topics
+        filtered['trigonometry'] = trigonometry_topics
+        filtered['ent'] = ent_topics
+
+    return render_template(
+        'dashboard.html',
+        username=username,
+        title=title,
+        language=language,
+        algebra_solved=algebra_solved,
+        total_algebra=total_algebra,
+        geometry_solved=geometry_solved,
+        total_geometry=total_geometry,
+        trigonometry_solved=trigonometry_solved,
+        total_trigonometry=total_trigonometry,
+        ent_solved=ent_solved,
+        total_ent=total_ent,
+        algebra_topics=filtered['algebra'],
+        geometry_topics=filtered['geometry'],
+        trigonometry_topics=filtered['trigonometry'],
+        ent_topics=filtered['ent'],
+        show_courses=show_courses
+    )
 
 @app.route('/signout')
 def signout():
@@ -402,6 +510,79 @@ def admin_add_exercise():
         return jsonify({'success': True, 'id': str(result.inserted_id)})
     else:
         return jsonify({'error': 'Insert failed'}), 400
+
+@app.route('/admin_delete_topic', methods=['POST'])
+def admin_delete_topic():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    username = session['username']
+    user = users.find_one({'username': username})
+    if not user or user.get('title') != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    data = request.json
+    course = data.get('course')
+    topic = data.get('topic')
+    if not (course and topic):
+        return jsonify({'error': 'Missing course or topic'}), 400
+    collection_map = {
+        'Алгебра': questions_algebra,
+        'Геометрия': questions_geometry,
+        'Тригонометрия': questions_trigonometry,
+        'ЕНТ': questions_ent,
+    }
+    collection = collection_map.get(course)
+    if collection is None:
+        return jsonify({'error': 'Invalid course'}), 400
+    result = collection.delete_many({'topic': topic})
+    if result.deleted_count > 0:
+        return jsonify({'success': True, 'deleted_count': result.deleted_count})
+    else:
+        return jsonify({'error': 'No exercises found for this topic'}), 404
+
+@app.route('/admin_add_topic', methods=['POST'])
+def admin_add_topic():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    username = session['username']
+    user = users.find_one({'username': username})
+    if not user or user.get('title') != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+    data = request.json
+    course = data.get('course')
+    topic = data.get('topic')
+    topic_name = data.get('topic_name')
+    level = data.get('level')
+    question = data.get('question')
+    options = data.get('options')
+    answer = data.get('answer')
+    if not (course and topic and topic_name and level and question and options and answer):
+        return jsonify({'error': 'Missing fields'}), 400
+    collection_map = {
+        'Алгебра': questions_algebra,
+        'Геометрия': questions_geometry,
+        'Тригонометрия': questions_trigonometry,
+        'ЕНТ': questions_ent,
+    }
+    collection = collection_map.get(course)
+    if collection is None:
+        return jsonify({'error': 'Invalid course'}), 400
+    new_ex = {
+        'topic': topic,
+        'topic_name': topic_name,
+        'level': level,
+        'question': question,
+        'options': options,
+        'answer': answer
+    }
+    result = collection.insert_one(new_ex)
+    if result.inserted_id:
+        return jsonify({'success': True, 'topic': topic, 'topic_name': topic_name})
+    else:
+        return jsonify({'error': 'Insert failed'}), 400
+
+@app.route('/about_us')
+def about_us():
+    return render_template('about_us.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}О нас{% endblock %}
+{% block content %}
+<style>
+    body { background: linear-gradient(135deg, #f9c823, #fc506e); min-height: 100vh; margin: 0; font-family: sans-serif; }
+    .about-container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 32px rgba(80,80,120,0.14); padding: 40px 36px; }
+    .about-header { text-align: center; margin-bottom: 32px; }
+    .about-title { font-size: 2.2rem; font-weight: 800; color: #222; line-height: 1.1; letter-spacing: -1px; }
+    .about-intro { font-size: 18px; line-height: 1.6; color: #333; margin-bottom: 32px; }
+    .team-section { margin-top: 40px; }
+    .team-title { font-size: 1.8rem; font-weight: 700; color: #222; margin-bottom: 20px; }
+    .team-member { display: flex; align-items: center; margin-bottom: 20px; }
+    .team-member img { width: 80px; height: 80px; border-radius: 50%; margin-right: 20px; }
+    .team-member-info h3 { font-size: 1.2rem; font-weight: 600; color: #222; margin: 0; }
+    .team-member-info p { font-size: 16px; color: #555; margin: 5px 0; }
+    .admin-btn { background: #667eea; color: #fff; border: none; border-radius: 14px; font-size: 1.2rem; font-weight: 500; padding: 12px 36px; display: block; text-align: center; box-shadow: 0 2px 8px rgba(80,80,120,0.08); transition: background 0.2s, box-shadow 0.2s; text-decoration: none; cursor: pointer; }
+    .admin-btn:hover { background: #4c51bf; box-shadow: 0 4px 16px rgba(80,80,120,0.13); }
+    .auth-btns-row { display: flex; justify-content: center; gap: 32px; margin-top: 24px; }
+    .advantages-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin: 40px 0 30px 0;
+      flex-wrap: wrap;
+    }
+    .advantage-card {
+      background: #f7fafc;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(80,80,120,0.07);
+      padding: 32px 24px 20px 24px;
+      width: 220px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+    }
+    .advantage-card:hover {
+      box-shadow: 0 6px 24px rgba(80,80,120,0.13);
+    }
+    .advantage-icon {
+      font-size: 48px;
+      margin-bottom: 18px;
+    }
+    .advantage-desc {
+      font-size: 1.08rem;
+      color: #222;
+      font-weight: 500;
+    }
+    @media (max-width: 900px) {
+      .advantages-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+      }
+      .advantage-card {
+        width: 90%;
+        max-width: 350px;
+      }
+    }
+</style>
+<div class="about-container">
+    <div class="about-header">
+        <h1 class="about-title">MathMastery - твоя платформа по решению задач по математике с ИИ-помощником</h1>
+    </div>
+    <div class="about-intro">
+        <p>MathMastery — это инновационная платформа для решения задач по математике с помощью ИИ-помощника. Независимо от уровня подготовки, ты сможешь:</p>
+        <div class="advantages-row">
+          <div class="advantage-card">
+            <div class="advantage-icon">📝</div>
+            <div class="advantage-desc">Пошаговые решения с пояснениями</div>
+          </div>
+          <div class="advantage-card">
+            <div class="advantage-icon">🔍</div>
+            <div class="advantage-desc">Разобрать ошибки и пробелы в знаниях</div>
+          </div>
+          <div class="advantage-card">
+            <div class="advantage-icon">🤖</div>
+            <div class="advantage-desc">Общаться с умным ИИ-ассистентом</div>
+          </div>
+        </div>
+        <p>MathMastery — учись эффективно, понимай глубоко, решай уверенно.</p>
+    </div>
+    <div class="team-section">
+        {% if 'username' not in session %}
+            <h2 class="team-title">Присоединяйтесь к нам!</h2>
+            <div class="auth-btns-row">
+                <a href="{{ url_for('signup') }}" class="admin-btn">Регистрация</a>
+                <a href="{{ url_for('signin') }}" class="admin-btn">Вход</a>
+            </div>
+        {% else %}
+            <a href="{{ url_for('dashboard') }}" class="admin-btn">К курсам</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

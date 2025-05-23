@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ topic }} - Algebra Exercises</title>
+    <title>{{ topic }} - Алгебра</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .option-btn.selected {
@@ -166,13 +166,24 @@
             font-style: italic;
             margin: 8px 0;
         }
+        .exercise-level {
+            display: inline-block;
+            background: #e6e6fa;
+            color: #764ba2;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 2px 10px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
     <div class="container dashboard-container">
         <div class="dashboard-header">
-            <h2>{{ topic }} Exercises</h2>
-            <a href="{{ url_for('dashboard') }}" class="btn signout-btn">Back to Dashboard</a>
+            <h2>{{ topic }} - Алгебра</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn signout-btn">Назад к панели</a>
         </div>
         <form method="POST" action="">
             <div class="exercises-list">
@@ -180,7 +191,7 @@
                     {% for ex in exercises %}
                         {% set qid = ex['_id'] %}
                         <div class="exercise-card" data-qid="{{ qid }}" data-exercise="{{ ex['question']|e }}">
-                            <div class="exercise-question">{{ ex['question'] }}</div>
+                            <div class="exercise-question">{{ ex['question'] }}{% if ex['level'] %} <span class="exercise-level">{{ ex['level'] }}</span>{% endif %}</div>
                             <div>
                                 {% for opt in ex['options'] %}
                                     {% set idx = loop.index0 %}
@@ -192,37 +203,37 @@
                                 <input type="hidden" name="answer_{{ qid }}" id="answer_{{ qid }}" value="{{ request.form.get('answer_' ~ qid, '') }}">
                             </div>
                             <div class="exercise-actions">
-                                <button type="button" class="ask-ai-btn" data-exercise="{{ ex['question']|e }}">Ask AI</button>
+                                <button type="button" class="ask-ai-btn" data-exercise="{{ ex['question']|e }}">Спросить ИИ</button>
                                 {% if feedback %}
                                     {% if feedback[qid|string] == 'correct' %}
-                                        <span class="feedback-label correct">Correct!</span>
+                                        <span class="feedback-label correct">Правильно!</span>
                                     {% elif feedback[qid|string] == 'incorrect' %}
-                                        <span class="feedback-label incorrect">Incorrect</span>
+                                        <span class="feedback-label incorrect">Неправильно</span>
                                     {% elif feedback[qid|string] == 'unanswered' %}
-                                        <span class="feedback-label unanswered">Unanswered</span>
+                                        <span class="feedback-label unanswered">Не отвечено</span>
                                     {% endif %}
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p>No exercises found for this topic.</p>
+                    <p>Нет упражнений для этой темы.</p>
                 {% endif %}
             </div>
-            <button type="submit" class="check-btn">Check</button>
+            <button type="submit" class="check-btn">Проверить</button>
         </form>
     </div>
     <!-- Chatbox Modal -->
     <div class="chatbox-modal" id="chatbox-modal">
         <div class="chatbox">
             <div class="chatbox-header">
-                <span>Ask AI about this exercise</span>
+                <span>Спросить ИИ о задании</span>
                 <button class="chatbox-close" id="chatbox-close">&times;</button>
             </div>
             <div class="chatbox-messages" id="chatbox-messages"></div>
             <div class="chatbox-input-row">
-                <input type="text" class="chatbox-input" id="chatbox-input" placeholder="Type your question...">
-                <button class="chatbox-send" id="chatbox-send">Send</button>
+                <input type="text" class="chatbox-input" id="chatbox-input" placeholder="Введите ваш вопрос...">
+                <button class="chatbox-send" id="chatbox-send">Отправить</button>
             </div>
         </div>
     </div>
